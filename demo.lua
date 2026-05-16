@@ -9,7 +9,9 @@ scene_t=0
 SCENE_LEN=420
 INTRO_LEN=300
 AWAKEN_LEN=420
-OUTRO_LEN=720
+OUTRO_LEN=1500   -- placeholder; recomputed once credits is defined
+OUTRO_SCROLL=0.22
+OUTRO_LINE_H=9
 FADE=40
 N_SCENES=11
 beat=0           -- decays 1→0 between kick hits, drives global pulse
@@ -118,15 +120,17 @@ cube_f={
  {2,6,7,3,12}   -- right
 }
 
--- voxel heightmap (128x128) — multi-octave for organic terrain
+-- voxel heightmap (128x128) — dramatic: ridges, canyons, snow peaks
 HM=128
 hmap={}
 for x=0,HM-1 do hmap[x]={}
  for z=0,HM-1 do
-  local h=math.sin(x/19)*4+math.cos(z/17)*4
-    +math.sin((x+z)/11)*3+math.cos((x-z)/13)*3
+  local h=math.sin(x/16)*6+math.cos(z/14)*6
+    +math.abs(math.sin(x/9+z/11))*5      -- ridges
+    +math.sin((x+z)/8)*3.5
+    +math.cos((x-z)/10)*3
     +math.sin(x/5)*1.5+math.cos(z/6)*1.5
-  hmap[x][z]=math.floor(h+12)
+  hmap[x][z]=math.floor(h+10)
  end
 end
 
@@ -320,52 +324,68 @@ function copper()
  end
 end
 
--- distance fog: blends color index toward sky band based on dist
+-- distance fog: blends color index toward sky horizon (14)
 function fogcol(base,fog)
- if fog>0.85 then return 10
- elseif fog>0.65 then return 9
- elseif fog>0.45 then return base==15 and 9 or base==4 and 9 or base
- else return base end
+ if fog<0.3 then return base end
+ if fog<0.55 then
+  local mid={[1]=4,[3]=4,[4]=9,[6]=9,[11]=10,[12]=10,[15]=10}
+  return mid[base] or base
+ end
+ if fog<0.8 then return 10 end
+ return 14
 end
 
 function voxel()
- -- gradient sky
+ -- sky gradient
  for y=0,71 do
   local c
-  if y<14 then c=2
-  elseif y<26 then c=1
+  if y<10 then c=2
+  elseif y<25 then c=1
   elseif y<40 then c=9
   elseif y<55 then c=10
   else c=14 end
   line(0,y,239,y,c)
  end
- -- sun
- local sun_x=120+math.sin(t/300)*70
- circ(sun_x,46,8,15)
- circb(sun_x,46,10,14)
+ -- horizon fallback
+ rect(0,72,240,64,9)
 
- local cam=t*0.45
- local sway=math.sin(t/120)*15
+ -- camera flies a banking S-curve through the landscape
+ local cam_x=math.sin(t/280)*55
+ local cam_z=t*1.0
+ local cam_h=22+math.sin(t/130)*5+math.cos(t/200)*2.5   -- multi-freq altitude
+ local yaw=math.cos(t/280)*0.45                          -- bank into the turn
+ local cs,sn=math.cos(yaw),math.sin(yaw)
+
+ -- sun (track yaw so it stays at horizon)
+ local sun_x=120-yaw*120
+ circ(sun_x,46,9,15)
+ circb(sun_x,46,11,14)
+
  for col=0,119 do
   local maxy=125
-  for dist=1,70 do
-   local wx=(col-60)*dist*0.05+sway
-   local wz=cam+dist
+  for dist=2,65 do
+   local rx=(col-60)*dist*0.035
+   local rz=dist
+   local wx=cam_x+rx*cs-rz*sn
+   local wz=cam_z+rx*sn+rz*cs
    local hx=math.floor(wx)%HM
    local hz=math.floor(wz)%HM
    if hx<0 then hx=hx+HM end
    if hz<0 then hz=hz+HM end
    local h=hmap[hx][hz]
-   local sy=72-(h-10)*32/dist
-   if sy<maxy and sy>=0 then
+   local sy=72-(h-cam_h)*19/dist
+   if sy<maxy then
+    local drawy=sy<0 and 0 or sy
     local base
-    if h<7 then base=1
-    elseif h<10 then base=3
-    elseif h<13 then base=6
-    elseif h<16 then base=14
-    elseif h<19 then base=4
-    else base=15 end
-    rect(col*2,sy,2,maxy-sy,fogcol(base,dist/70))
+    if h<3 then base=1                 -- deep valley
+    elseif h<7 then base=4             -- dirt
+    elseif h<11 then base=3            -- dark forest
+    elseif h<15 then base=11           -- light green slope
+    elseif h<19 then base=12           -- alpine green
+    elseif h<23 then base=6            -- gray rock
+    elseif h<27 then base=7            -- light rock
+    else base=15 end                   -- snow cap
+    rect(col*2,drawy,2,maxy-drawy,fogcol(base,(dist-2)/60))
     maxy=sy
    end
   end
@@ -443,50 +463,125 @@ function awakening()
  end
 end
 
+credits={
+ "TIC-80 DEMO",
+ "",
+ " claude's first attempt",
+ " at a fantasy console",
+ "",
+ "         2026",
+ "",
+ "",
+ " --- scenes ---",
+ "",
+ "  awakening",
+ "  plasma",
+ "  starfield",
+ "  tunnel",
+ "  metaballs",
+ "  rotozoom",
+ "  cube3d",
+ "  copper bars",
+ "  voxel landscape",
+ "  fire",
+ "",
+ "",
+ " --- under the hood ---",
+ "",
+ " 4 waveforms",
+ " 6 sfx slots",
+ " 4 audio channels",
+ "",
+ " pokes to 0x0FFE4",
+ " (waveform memory)",
+ "",
+ " pokes to 0x100E4",
+ " (sfx memory)",
+ "",
+ " palette fade via",
+ " 0x03FC0",
+ "",
+ "",
+ " --- greetings ---",
+ "",
+ " to annejan,",
+ " who watched this first",
+ "",
+ " to the demoscene,",
+ " for inspiring us all",
+ "",
+ " to everyone at",
+ " tic80.com",
+ "",
+ " to nesbox,",
+ " for making tic-80",
+ "",
+ " to anthropic,",
+ " for making claude",
+ "",
+ " to all chiptune nerds,",
+ " all pixel artists,",
+ " all fantasy console fans,",
+ " all sceners past and",
+ " present, and to",
+ " everyone watching",
+ " this right now",
+ "",
+ "",
+ " --- thanks ---",
+ "",
+ " lua devs",
+ " sdl + opengl",
+ " 16 colors of sweetie16",
+ "",
+ "",
+ "",
+ "",
+ " thank you",
+ " for watching",
+ "",
+ "         <3",
+ "",
+ "",
+ "  see you in the next",
+ "      demo, maybe",
+ "",
+ ""
+}
+
+-- length needed so last line passes top of screen (y < -15) before restart
+OUTRO_LEN=math.ceil((140+15+(#credits-1)*OUTRO_LINE_H)/OUTRO_SCROLL)+60
+
 function outro()
  cls(0)
  local p=scene_t
- -- soft starfield in the background
- for i=1,60 do
-  local x=(i*53+p)%240
+ -- soft starfield drifting in the background
+ for i=1,80 do
+  local x=(i*53+p//2)%240
   local y=(i*97)%136
   pix(x,y,1+(i%3))
  end
- local credits={
-  "TIC-80 DEMO",
-  "",
-  " claude's first attempt",
-  " at a fantasy console",
-  "",
-  " 2026",
-  "",
-  " scenes:",
-  "  awakening, plasma,",
-  "  starfield, tunnel,",
-  "  metaballs, rotozoom,",
-  "  cube3d, copper bars,",
-  "  voxel, fire",
-  "",
-  " audio: pokes to 0x0FFE4",
-  " and 0x100E4",
-  "",
-  " 4 waveforms, 6 sfx,",
-  " 4 channels",
-  "",
-  "",
-  " thank you for watching",
-  "",
-  "          <3"
- }
- local scroll_y=140-p*0.25
+ -- subtle moving aurora bands
+ for y=0,135 do
+  local v=math.sin(y/22+p/60)+math.sin(y/15-p/45)
+  if v>1.4 then pix((p+y*3)%240,y,9) end
+  if v<-1.4 then pix((p*2+y*5)%240,y,2) end
+ end
+ -- credits scroll
+ local scroll_y=140-p*OUTRO_SCROLL
  for i,l in ipairs(credits) do
-  local y=math.floor(scroll_y+(i-1)*9)
+  local y=math.floor(scroll_y+(i-1)*OUTRO_LINE_H)
   if y>-10 and y<140 then
    if i==1 then
     print_big(l,72,y,15,true,2)
    elseif l~="" then
     local x=(240-#l*6)/2
-    print(l,x,y,(i>=8 and i<=13) and 12 or 14,false,1,false)
+    local col=14
+    if l:sub(1,4)=="--- " then col=12       -- section headers
+    elseif l:sub(1,4)=="    " then col=15
+    elseif y<28 or y>108 then col=10 end
+    print(l,x+1,y+1,0,false,1,false)
+    print(l,x,y,col,false,1,false)
    end
   end
  end
