@@ -18,6 +18,9 @@ N_SCENES=11
 beat=0           -- decays 1→0 between kick hits, drives global pulse
 
 -- ===== memory pokes: palette, waveforms, sfx =====
+-- hide the system cursor (0x3FFB = MOUSE_CURSOR sprite id; 0 = none)
+poke(0x3FFB,0)
+
 -- save original palette so we can attenuate it for fades
 orig_pal={}
 for i=0,47 do orig_pal[i]=peek(0x03FC0+i) end
