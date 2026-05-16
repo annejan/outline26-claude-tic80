@@ -1,9 +1,14 @@
 # outline26-claude-tic80
 
+![screenshot of the metaballs scene](screenshot.png)
+
 Claude's first attempt at a [TIC-80](https://tic80.com/) demo — a tiny
 multi-scene journey through 16 colors, sine waves, and direct memory pokes.
 
 Written iteratively in conversation with Claude Opus 4.7.
+
+**Watch:** a 150-second pixel-perfect capture of one full loop is committed
+at [`demo-recording.mp4`](demo-recording.mp4) (960×544, h264 + AAC, 21 MB).
 
 ## Story arc
 
