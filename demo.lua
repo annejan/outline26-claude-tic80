@@ -3,6 +3,7 @@
 -- desc:   plasma / starfield / tunnel / rotozoomer / fire + scroller, fade transitions, sfx
 -- script: lua
 
+-- ===== globals & timing =====
 t=0
 scene=0          -- 0 = title, 1 = awakening, 2..10 = effects, 11 = outro
 scene_t=0
@@ -16,6 +17,7 @@ FADE=40
 N_SCENES=11
 beat=0           -- decays 1→0 between kick hits, drives global pulse
 
+-- ===== memory pokes: palette, waveforms, sfx =====
 -- save original palette so we can attenuate it for fades
 orig_pal={}
 for i=0,47 do orig_pal[i]=peek(0x03FC0+i) end
@@ -64,6 +66,7 @@ do local v={3,5,7,8,9,9,9,9,9,9,9,9,8,8,8,8,7,7,7,6,6,6,5,5,4,3,2,1,0,0} mkSFX(4
 -- SFX 5: snare (noise, longer than hihat)
 do local v={14,12,10,8,6,4,3,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0} mkSFX(5,3,v) end
 
+-- ===== runtime state: textures, particles, terrain =====
 -- pre-built rotozoomer texture (16×16, indexed)
 tex={}
 for y=0,15 do
@@ -134,6 +137,7 @@ for x=0,HM-1 do hmap[x]={}
  end
 end
 
+-- ===== effect scenes (sorted by story order in dispatch below) =====
 function plasma()
  cls(0)
  local pulse=1+beat*0.4
@@ -394,6 +398,7 @@ end
 
 scroll_text="    CLAUDE LEARNS TIC-80  ***  AWAKENING / PLASMA / STARFIELD / TUNNEL / METABALLS / ROTOZOOM / CUBE / COPPER / VOXEL / FIRE  ***  A LITTLE STORY IN 16 COLORS  ***  THANKS FOR WATCHING       "
 
+-- ===== story content + on-screen text =====
 function scroller()
  local sx=240-(t*2)%(240+#scroll_text*8)
  for i=1,#scroll_text do
@@ -425,6 +430,7 @@ captions={
  [10]="burning bright at the end"
 }
 
+-- ===== story-frame scenes: awakening, outro, intro =====
 function awakening()
  cls(0)
  local p=scene_t
@@ -619,6 +625,7 @@ function intro()
  print("a tiny journey through 16 colors",46,118,14,false,1,true)
 end
 
+-- ===== ui helpers =====
 function print_big(s,x,y,col,shadow,sc)
  if shadow then print(s,x+1,y+1,0,false,sc,false) end
  print(s,x,y,col,false,sc,false)
@@ -631,6 +638,7 @@ function apply_fade(k)
  end
 end
 
+-- ===== music sequencer: patterns & tempo =====
 -- multi-track chiptune: bass (chan 0), lead (chan 1), kick (chan 2), hihat (chan 3)
 -- 16-bar bass pattern, 32-bar lead pattern (twice the rate)
 bass={"C-2","C-2","G-2","E-2","F-2","F-2","C-3","G-2",
@@ -644,6 +652,7 @@ kick_p={1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0}
 hat_p ={0,0,1,0,0,0,1,1,0,0,1,0,0,0,1,1}
 -- scale tempo: 1 beat = 15 frames (4 beats/sec → 240 bpm sixteenth)
 
+-- ===== main loop: dispatch + fade + music + scene advance =====
 function TIC()
  -- restore palette every frame, then we re-attenuate if fading
  for i=0,47 do poke(0x03FC0+i,orig_pal[i]) end

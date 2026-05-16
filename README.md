@@ -68,6 +68,32 @@ flatpak run com.tic80.TIC_80 --skip --fs . \
   --cmd "new lua & import code demo.lua & save demo.tic" --cli
 ```
 
+## Size
+
+- `demo.lua` — **18.7 KB** (753 lines)
+- `demo.tic` cart — **19.0 KB** (TIC-80 Pro cart limit is 256 KB, so ~7%)
+
+Where the bytes go (rough breakdown):
+
+| Section | Approx | What's in there |
+|---|---:|---|
+| Memory pokes | 1.1 KB | palette save + 4 waveforms + 6 SFX entries, all built at boot via direct RAM pokes |
+| Runtime state | 1.7 KB | rotozoom texture, starfield, fire buffer, metaballs, cube data, voxel heightmap |
+| Effect scenes | 6.6 KB | plasma, starfield, tunnel, rotozoom, fire, metaballs, cube3d, copper, voxel (≈9 scenes × ~700 B each) |
+| Story scenes | 4.8 KB | awakening (primitive bloom), ~80-line credits scroll, outro background, title intro |
+| Main loop | 2.6 KB | scene dispatch, palette-fade transition, music sequencer, scene-advance timing |
+| Other | 1.9 KB | header, story text, ui helpers, music patterns |
+
+The two largest single functions are **voxel** (~1.4 KB — banking S-curve
+camera, heightmap raycast, 8-band coloring, distance fog) and the
+**main TIC()** loop (~2.6 KB — does the per-frame dispatch, palette
+restore + fade, and 4-channel music sequencing).
+
+For comparison, the [`minimal`](https://github.com/annejan/outline26-claude-tic80/tree/minimal)
+branch fits four effects (plasma / starfield / tunnel / fire) into
+**~880 bytes** by dropping the story, scroller, captions, music,
+transitions, and metadata — an exercise in TIC-80 size-coding.
+
 ## Branches
 
 - `main` — the full 744-line storytelling demo
