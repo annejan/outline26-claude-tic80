@@ -33,6 +33,11 @@ Music intensity layers in across the story: pad-only at the title,
 adding bass → lead → hihat → kick+snare as it builds toward the fire
 finale, then fades out across the outro.
 
+## Prompts
+
+The full conversation log of prompts that drove this demo is in
+[`PROMPTS.md`](PROMPTS.md).
+
 ## Audio without cart data
 
 All four waveforms (triangle, square, saw, noise) and six SFX slots are
