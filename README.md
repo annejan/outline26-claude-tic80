@@ -9,7 +9,7 @@ Written iteratively in [conversation](PROMPTS.md) with Claude Opus 4.7.
 
 **Watch:** a 150-second pixel-perfect capture of one full loop is committed
 at [`demo-recording.mp4`](demo-recording.mp4) (960×544, h264 + AAC, 21 MB) or
-on [YouTube](https://youtu.be/4iU0l5klHEc).
+on [YouTube](https://youtu.be/_vUn_xbWBt8).
 
 ## Story arc
 
